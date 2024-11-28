@@ -14,7 +14,7 @@ export const useTasks = () => {
 
   useEffect(() => {
     
-    fetch("${API_BASE_URL}/api/v1/tasks")
+    fetch(`${API_BASE_URL}/api/v1/tasks`)
     .then( tasks => tasks.json())
     .then( tasks => tasks.filter(task => task.user.user_id === userId)) // user-id <--- working
     .then( tasks => tasks.filter(task => task.archived === false)) // archived <--- working
@@ -38,7 +38,7 @@ export const useProjects = () => {
 
   useEffect(() => {
 
-    fetch("${API_BASE_URL}/api/v1/projects")
+    fetch(`${API_BASE_URL}/api/v1/projects`)
     .then( projects => projects.json())
     .then( projects => projects.filter(project => project.user.user_id === userId)) // user-id <--- working
     .then( json => {  
@@ -57,7 +57,7 @@ export const useUsers = () => {
 
   useEffect(() => {
 
-    fetch("${API_BASE_URL}/api/v1/users")
+    fetch(`${API_BASE_URL}/api/v1/users`)
     .then( projects => projects.json())
     // .then( projects => projects.filter(project => project.user.user_id === getProject)) // user-id <--- working
     .then( json => {  
