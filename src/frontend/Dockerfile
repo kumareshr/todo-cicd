@@ -1,38 +1,34 @@
 # Stage 1: Build the React app
 FROM node:16-alpine as build
 
-# Set working directory
 WORKDIR /app
 
-# Add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package.json package-lock.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the app files
+# Copy the app files and build the app for production
 COPY . ./
-
-# Build the app for production
 RUN npm run build
 
 # Stage 2: Serve the app using nginx
 FROM nginx:stable-alpine
 
-# Copy built files from the previous stage to nginx's default directory
+# Copy built React app files
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy custom NGINX configuration
+# Copy custom nginx configuration and runtime script
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY replace-env.sh /docker-entrypoint.d/replace-env.sh
 
-# Add script for runtime environment variable injection
-COPY ./env-injector.sh /docker-entrypoint.d/
+# Ensure the script is executable
+RUN chmod +x /docker-entrypoint.d/replace-env.sh
 
-# Expose port 80
+# Set the entrypoint to the script
+ENTRYPOINT ["/docker-entrypoint.d/replace-env.sh"]
+
+# Expose port 80 and start NGINX
 EXPOSE 80
-
-# Start NGINX
 CMD ["nginx", "-g", "daemon off;"]
