@@ -1,21 +1,30 @@
-# pull official base image
-FROM node:13.12.0-alpine
+# Stage 1: Build the React app
+FROM node:16-alpine as build
 
-# set working directory
+# Set working directory
 WORKDIR /app
 
-# add `/app/node_modules/.bin` to $PATH
+# Add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
 
-# install app dependencies
-COPY package.json ./
-COPY package-lock.json ./
-RUN npm install
+# Install app dependencies
+COPY package.json package-lock.json ./
+RUN npm install --legacy-peer-deps
 
-# add app
+# Copy app files
 COPY . ./
 
+# Build the app for production
+RUN npm run build
+
+# Stage 2: Serve the app using nginx
+FROM nginx:stable-alpine
+
+# Copy built files from the previous stage to nginx's default directory
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Expose port 80 to the outside world
 EXPOSE 3000
 
-# start app
-CMD ["npm", "start"]  
+# Start nginx server
+CMD ["nginx", "-g", "daemon off;"]
