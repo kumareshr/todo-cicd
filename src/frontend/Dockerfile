@@ -4,12 +4,15 @@ FROM node:16-alpine as build
 # Set working directory
 WORKDIR /app
 
-# Install Python, make, and g++
-# These are required for node-gyp to compile native modules
-RUN apk add --no-cache python3 make g++ 
+# Install required build tools and Python
+RUN apk add --no-cache python3 make g++ \
+    && ln -sf python3 /usr/bin/python  # Ensure Python points to python3
 
 # Add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
+
+# Upgrade npm to the latest version
+RUN npm install -g npm@10.9.1
 
 # Copy package files
 COPY package.json package-lock.json ./
