@@ -11,7 +11,7 @@ on:
 env:
   PROJECT_ID: stone-botany-440911-u3
   REGION: asia-northeast1
-  GAR_LOCATION: asia-northeast1-docker.pkg.dev/stone-botany-440911-u3/devops-devops/
+  GAR_LOCATION: asia-northeast1-docker.pkg.dev/stone-botany-440911-u3/devops-webapp/
 
 jobs:
   build-and-push:
