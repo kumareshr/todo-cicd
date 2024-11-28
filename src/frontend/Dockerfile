@@ -4,14 +4,20 @@ FROM node:16-alpine as build
 # Set working directory
 WORKDIR /app
 
+# Install Python, make, and g++
+# These are required for node-gyp to compile native modules
+RUN apk add --no-cache python3 make g++ 
+
 # Add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
 
-# Install app dependencies
+# Copy package files
 COPY package.json package-lock.json ./
+
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Copy app files
+# Copy the rest of the app files
 COPY . ./
 
 # Build the app for production
@@ -24,7 +30,7 @@ FROM nginx:stable-alpine
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Expose port 80 to the outside world
-EXPOSE 3000
+EXPOSE 80
 
 # Start nginx server
 CMD ["nginx", "-g", "daemon off;"]
