@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install Python, make, and g++
 # These are required for node-gyp to compile native modules
-RUN apk add --no-cache python3 make g++ 
+RUN apk add --no-cache python2 make g++ 
 
 # Add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
