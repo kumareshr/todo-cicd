@@ -42,7 +42,7 @@ jobs:
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
       
     - name: Build Backend Docker Image
-      working-directory: app/backend
+      working-directory: src/backend
       run: |
         docker build -t ${{ env.GAR_LOCATION }}backend:${{ github.sha }} .
         docker tag ${{ env.GAR_LOCATION }}backend:${{ github.sha }} ${{ env.GAR_LOCATION }}backend:latest
@@ -53,7 +53,7 @@ jobs:
         docker push ${{ env.GAR_LOCATION }}backend:latest
 
     - name: Build Frontend Docker Image
-      working-directory: app/frontend
+      working-directory: src/frontend
       run: |
         docker build -t ${{ env.GAR_LOCATION }}frontend:${{ github.sha }} .
         docker tag ${{ env.GAR_LOCATION }}frontend:${{ github.sha }} ${{ env.GAR_LOCATION }}frontend:latest
