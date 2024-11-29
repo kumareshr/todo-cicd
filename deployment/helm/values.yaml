@@ -1,0 +1,50 @@
+# Global configurations
+global:
+  appName: "todo-webapp"
+
+namespace: todo-webapp
+
+serviceAccount:
+  name: artifact-registry-ksa
+  gcpServiceAccount: artifact-registry-reader@stone-botany-440911-u3.iam.gserviceaccount.com
+
+
+# Backend configurations
+backend:
+  image:
+    repository: asia-northeast1-docker.pkg.dev/stone-botany-440911-u3/devops-webapp/backend
+    tag: "latest"
+  replicas: 3
+  resources: {}
+
+backendServiceUrl: "http://todo-cicd-backend.todo-webapp.svc.cluster.local:8000"
+
+# Frontend configurations
+frontend:
+  image:
+    repository: asia-northeast1-docker.pkg.dev/stone-botany-440911-u3/devops-webapp/frontend
+    tag: "latest"
+  replicas: 3
+  resources: {}
+
+# Database configurations ( Managed using  external secret manager)
+#db:
+#  host: 127.0.0.1
+#  port: "3306"
+#  name: test
+#  username: test
+#  password: test
+
+# Service configurations
+service:
+  backend:
+    type: LoadBalancer
+    port: 8000
+  frontend:
+    type: LoadBalancer
+    port: 80
+
+# Ingress configurations
+ingress:
+  enabled: true
+  host: "todo-app.example.com"
