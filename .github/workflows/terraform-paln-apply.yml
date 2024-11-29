@@ -39,10 +39,12 @@ jobs:
         working-directory: terraform
         run: terraform plan -no-color -out=tfplan
 
-      - name: Output Plan
+      - name: Output Full Plan (JSON)
         if: github.event_name != 'push' || github.ref != 'refs/heads/main'
         working-directory: terraform
-        run: terraform show -no-color tfplan
+        run: |
+          terraform show -json tfplan > plan.json
+          cat plan.json | jq .
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
