@@ -39,16 +39,8 @@ jobs:
         working-directory: terraform
         run: terraform plan -no-color -out=tfplan
 
-      - name: Debug Plan File
-        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
-        working-directory: terraform
-        run: |
-          echo "Checking if tfplan file exists:"
-          ls -lah tfplan || exit 1
 
-      - name: Output Full Plan (JSON)
-        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: terraform
-        run: |
-          terraform show -json tfplan > plan.json
-          cat plan.json | jq .
+        run: terraform apply -auto-approve
