@@ -1,0 +1,43 @@
+name: Update Helm Values
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  VALUES_FILE: deployment/helm/values.yaml
+
+jobs:
+  update-values:
+    name: Update Helm Values on Main Merge
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+    - name: Extract Current Commit SHA
+      id: extract_sha
+      run: echo "commit_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - name: Update Backend Image Tag in values.yaml
+      run: |
+        sed -i "s|\(repository:.*backend\).*|\1\n    tag: \"${{ env.commit_sha }}\"|" $VALUES_FILE
+
+    - name: Update Frontend Image Tag in values.yaml
+      run: |
+        sed -i "s|\(repository:.*frontend\).*|\1\n    tag: \"${{ env.commit_sha }}\"|" $VALUES_FILE
+
+    - name: Commit and Push Changes
+      run: |
+        git add $VALUES_FILE
+        git commit -m "Update image tags to ${{ env.commit_sha }}"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
