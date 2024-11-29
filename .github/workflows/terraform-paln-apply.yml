@@ -39,6 +39,11 @@ jobs:
         working-directory: terraform
         run: terraform plan
 
+      - name: Output Plan
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        working-directory: terraform
+        run: terraform show -no-color tfplan
+
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: terraform
