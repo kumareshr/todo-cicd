@@ -26,8 +26,13 @@ jobs:
       - name: Authenticate with GCP
         id: auth
         run: |
-          echo "${{ secrets.GCP_IAC_SA_KEY }}" > GCP_IAC_SA_KEY.json
-          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/GCP_IAC_SA_KEY.json
+          echo "${{ secrets.GCP_IAC_SA_KEY }}" > $HOME/GCP_IAC_SA_KEY.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/GCP_IAC_SA_KEY.json
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/GCP_IAC_SA_KEY.json
+
+      - name: Verify Authentication
+        run: gcloud auth activate-service-account --key-file=$HOME/GCP_IAC_SA_KEY.json
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -36,14 +41,20 @@ jobs:
 
       - name: Terraform Init
         working-directory: terraform
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/GCP_IAC_SA_KEY.json
         run: terraform init
 
       - name: Terraform Plan
         if: github.event_name != 'push' || github.ref != 'refs/heads/main'
         working-directory: terraform
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/GCP_IAC_SA_KEY.json
         run: terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: terraform
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/GCP_IAC_SA_KEY.json
         run: terraform apply -auto-approve
