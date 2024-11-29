@@ -1,0 +1,52 @@
+name: Terraform Workflow
+
+on:
+  push:
+    paths:
+      - 'terraform/**' # Trigger workflow only if changes are made in the terraform directory
+    branches:
+      - '**'           # Run for all branches
+  pull_request:
+    paths:
+      - 'terraform/**' # Run for PRs with changes in the terraform directory
+
+jobs:
+  terraform:
+    name: Terraform Actions
+    runs-on: ubuntu-latest
+
+    env:
+      TF_LOG: WARN # Set Terraform log level
+      TF_IN_AUTOMATION: true # Avoid interactive prompts
+
+    steps:
+      # Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Terraform CLI
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7 # Specify your Terraform version
+
+      # Cache Terraform provider plugins
+      - name: Cache Terraform Plugins
+        uses: actions/cache@v3
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-terraform-plugins
+
+      # Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Run Terraform Plan for push and pull_request events
+      - name: Terraform Plan
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        run: terraform plan
+
+      # Run Terraform Apply only on push to the main branch
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
