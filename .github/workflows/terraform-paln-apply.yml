@@ -3,12 +3,12 @@ name: Terraform Workflow
 on:
   push:
     paths:
-      - 'terraform/**' # Trigger workflow only if changes are made in the terraform directory
+      - 'terraform/**'
     branches:
-      - '**'           # Run for all branches
+      - '**'
   pull_request:
     paths:
-      - 'terraform/**' # Run for PRs with changes in the terraform directory
+      - 'terraform/**'
 
 jobs:
   terraform:
@@ -16,37 +16,40 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TF_LOG: WARN # Set Terraform log level
-      TF_IN_AUTOMATION: true # Avoid interactive prompts
+      TF_LOG: WARN
+      TF_IN_AUTOMATION: true
 
     steps:
-      # Checkout code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up Terraform CLI
+      - name: Authenticate with GCP
+        id: auth
+        run: |
+          echo "${{ secrets.GCP_IAC_SA_KEY }}" > GCP_IAC_SA_KEY.json
+          export GOOGLE_APPLICATION_CREDENTIALS="GCP_IAC_SA_KEY.json"
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7 # Specify your Terraform version
+          terraform_version: 1.5.7
 
-      # Cache Terraform provider plugins
       - name: Cache Terraform Plugins
         uses: actions/cache@v3
         with:
           path: ~/.terraform.d/plugin-cache
           key: ${{ runner.os }}-terraform-plugins
 
-      # Initialize Terraform
       - name: Terraform Init
-        run: terraform init
+        working-directory: terraform
+        run: terraform init -backend-config="bucket=<YOUR_BUCKET_NAME>" -backend-config="prefix=<YOUR_STATE_FILE_PREFIX>"
 
-      # Run Terraform Plan for push and pull_request events
       - name: Terraform Plan
         if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        working-directory: terraform
         run: terraform plan
 
-      # Run Terraform Apply only on push to the main branch
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: terraform
         run: terraform apply -auto-approve
