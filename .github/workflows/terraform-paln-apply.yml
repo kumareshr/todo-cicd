@@ -15,24 +15,15 @@ jobs:
     name: Terraform Actions
     runs-on: ubuntu-latest
 
-    env:
-      TF_LOG: WARN
-      TF_IN_AUTOMATION: true
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Authenticate with GCP
-        run: |
-          echo "${{ secrets.GCP_IAC_SA_KEY }}" > $HOME/GCP_IAC_SA_KEY.json
-          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/GCP_IAC_SA_KEY.json
-          gcloud auth activate-service-account --key-file=$HOME/GCP_IAC_SA_KEY.json
-
-      - name: Debug Service Account Key
-        run: |
-          echo "Validating the JSON Key File"
-          cat $HOME/GCP_IAC_SA_KEY.json
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: "${{ secrets.GCP_IAC_SA_KEY }}"
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
