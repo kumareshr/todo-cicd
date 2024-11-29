@@ -1,64 +1,45 @@
-name: Build and Push Docker Images to GCR
+name: Terraform Workflow
 
 on:
   push:
-    branches-ignore:
-      - main
     paths:
-      - src/frontend/**
-      - src/backend/** 
-
-env:
-  PROJECT_ID: stone-botany-440911-u3
-  REGION: asia-northeast1
-  GAR_LOCATION: asia-northeast1-docker.pkg.dev/stone-botany-440911-u3/devops-webapp/
+      - 'terraform/**'
+    branches:
+      - '**'
+  pull_request:
+    paths:
+      - 'terraform/**'
 
 jobs:
-  build-and-push:
-    name: Build and Push to GCR
+  terraform:
+    name: Terraform Actions
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - id: "auth"
-      uses: "google-github-actions/auth@v1"
-      with:
+      - name: Authenticate with GCP
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
           credentials_json: "${{ secrets.GCP_IAC_SA_KEY }}"
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        version: 'latest'
-        service_account_key: ${{ secrets.GCP_IAC_SA_KEY }}
-        project_id: ${{ env.PROJECT_ID }}
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
 
-    - name: "Use gcloud CLI"
-      run: "gcloud info"
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
 
-    - name: "Docker auth"
-      run: |-
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
-      
-    - name: Build Backend Docker Image
-      working-directory: src/backend
-      run: |
-        docker build -t ${{ env.GAR_LOCATION }}backend:${{ github.sha }} .
-        docker tag ${{ env.GAR_LOCATION }}backend:${{ github.sha }} ${{ env.GAR_LOCATION }}backend:latest
+      - name: Terraform Plan
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        working-directory: terraform
+        run: terraform plan
 
-    - name: Push Backend Docker Image
-      run: |
-        docker push ${{ env.GAR_LOCATION }}backend:${{ github.sha }}
-        docker push ${{ env.GAR_LOCATION }}backend:latest
-
-    - name: Build Frontend Docker Image
-      working-directory: src/frontend
-      run: |
-        docker build -t ${{ env.GAR_LOCATION }}frontend:${{ github.sha }} .
-        docker tag ${{ env.GAR_LOCATION }}frontend:${{ github.sha }} ${{ env.GAR_LOCATION }}frontend:latest
-
-    - name: Push Frontend Docker Image
-      run: |
-        docker push ${{ env.GAR_LOCATION }}frontend:${{ github.sha }}
-        docker push ${{ env.GAR_LOCATION }}frontend:latest
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: terraform
+        run: terraform apply -auto-approve
